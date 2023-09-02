@@ -25,7 +25,7 @@ Log event:
 ```
 Filename, line
 Message number
-Process number
+Process id
 Thread id
 Date, time
 Customize Message
