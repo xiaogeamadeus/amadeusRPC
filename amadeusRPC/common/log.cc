@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "amadeusRPC/common/log.h"
 #include "amadeusRPC/common/util.h"
+#include "amadeusRPC/common/config.h"
 
 
 namespace amadeusrpc {
@@ -10,11 +11,12 @@ namespace amadeusrpc {
 static Logger* g_logger = NULL;
 
 Logger* Logger::GetGlobalLogger() {
-    if (g_logger) {
-        return g_logger;
-    }
-    g_logger = new Logger();
     return g_logger;
+}
+
+void Logger::InitGlobalLogger() {
+    LogLevel global_log_level = StringToLogLevel(Config::GetGlobalConfig()->m_log_level);
+    g_logger = new Logger(global_log_level);
 }
 
 
@@ -28,6 +30,18 @@ std::string LogLevelToString(LogLevel level) {
             return "ERROR";
         default:
             return "UNKNOWN";
+    }
+}
+
+LogLevel StringToLogLevel(const std::string& log_level) {
+    if (log_level == "DEBUG") {
+        return Debug;
+    } else if (log_level == "INFO") {
+        return Info;
+    } else if (log_level == "ERROR") {
+        return Error;
+    } else {
+        return Unknown;
     }
 }
 

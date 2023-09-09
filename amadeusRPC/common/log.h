@@ -5,6 +5,8 @@
 #include <queue>
 #include <memory>
 
+#include "amadeusRPC/common/config.h"
+
 namespace amadeusrpc {
 
 
@@ -22,12 +24,30 @@ std::string formatString(const char* str, Args&&... args) {
 }
 
 #define DEBUGLOG(str, ...) \
-    std::string msg = (new amadeusrpc::LogEvent(amadeusrpc::LogLevel::Debug))->toString() + amadeusrpc::formatString(str, ##__VA_ARGS__); \
-    msg += "\n";                                                                                                                          \
-    amadeusrpc::Logger::GetGlobalLogger()->pushLog(msg);                                                                                  \
-    amadeusrpc::Logger::GetGlobalLogger()->log();                                                                                         \
+    if (amadeusrpc::Logger::GetGlobalLogger()->getLogLevel() <= amadeusrpc::Debug) \
+    {                      \
+        amadeusrpc::Logger::GetGlobalLogger()->pushLog((new amadeusrpc::LogEvent(amadeusrpc::LogLevel::Debug))->toString() + amadeusrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        amadeusrpc::Logger::GetGlobalLogger()->log();                              \
+    }                      \
+
+#define INFOLOG(str, ...) \
+    if (amadeusrpc::Logger::GetGlobalLogger()->getLogLevel() <= amadeusrpc::Info) \
+    {                      \
+        amadeusrpc::Logger::GetGlobalLogger()->pushLog((new amadeusrpc::LogEvent(amadeusrpc::LogLevel::Info))->toString() + amadeusrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        amadeusrpc::Logger::GetGlobalLogger()->log();                              \
+    }                     \
+
+#define ERRORLOG(str, ...) \
+    if (amadeusrpc::Logger::GetGlobalLogger()->getLogLevel() <= amadeusrpc::Error) \
+    {                      \
+        amadeusrpc::Logger::GetGlobalLogger()->pushLog((new amadeusrpc::LogEvent(amadeusrpc::LogLevel::Error))->toString() + amadeusrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        amadeusrpc::Logger::GetGlobalLogger()->log();                              \
+    } \
+
+
 
 enum LogLevel {
+    Unknown = 0,
     Debug = 1,
     Info = 2,
     Error = 3
@@ -35,14 +55,21 @@ enum LogLevel {
 
 class Logger {
 public:
-
     typedef std::shared_ptr<Logger> s_ptr;
+
+    Logger(LogLevel level) : m_set_level(level) {};
 
     void pushLog(const std::string& msg);
 
     void log();
+
+    LogLevel getLogLevel() const {
+        return m_set_level;
+    }
 public:
     static Logger* GetGlobalLogger();
+
+    static void InitGlobalLogger();
 private:
     LogLevel m_set_level;
 
@@ -50,6 +77,8 @@ private:
 };
 
 std::string LogLevelToString(LogLevel level);
+
+LogLevel StringToLogLevel(const std::string& log_level);
 
 class LogEvent {
  public:
